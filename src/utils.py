@@ -60,6 +60,8 @@ class SentimentExample:
         if not isinstance(other, SentimentExample):
             # don't attempt to compare against unrelated types
             return NotImplemented
+        print(self.words, other.words)
+        print(self.label, other.label)
         return self.words == other.words and self.label == other.label
 
     @property
@@ -90,6 +92,21 @@ def evaluate_classification(predictions: torch.Tensor, labels: torch.Tensor) -> 
     Returns:
         dict: A dictionary containing the calculated metrics.
     """
-    metrics: Dict[str, float] = None
+    tp = int(torch.sum((predictions == labels) & predictions == 1))
+    tn = int(torch.sum((predictions == labels) & (predictions == 0)))
+    fp = int(torch.sum((predictions == 1 ) & (predictions != labels)))
+    fn = int(torch.sum((predictions == 0 ) & (predictions != labels)))
+
+    accuracy = (tp + tn) / (tp + tn + fp + fn)
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+    f1_score = 2*precision*recall / (precision + recall)
+
+    metrics: Dict[str, float] = {
+        "accuracy": float(accuracy),
+        "precision": float(precision),
+        "recall": float(recall),
+        "f1_score": float(f1_score)
+    }
 
     return metrics

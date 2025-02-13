@@ -33,6 +33,30 @@ class LogisticRegression:
             None: The function updates the model weights in place.
         """
         # TODO: Implement gradient-descent algorithm to optimize logistic regression weights
+        self.weights = self.initialize_parameters(features.size(1), self.random_state)
+        iteration = 1
+        labels = labels.float()
+        features = features.float()
+        
+        while iteration <= epochs:
+            
+            predictions = self.predict_proba(features)
+            predictions = predictions.float()
+            loss = self.binary_cross_entropy_loss(predictions, labels)
+
+            gradient_weights = (predictions - labels)@features / (features.size(0))
+            gradiend_bias = torch.sum(predictions-labels) / features.size(0)
+
+            self.weights[:-1] -=  learning_rate*gradient_weights
+            self.weights[-1] -= learning_rate*gradiend_bias
+
+            if iteration % (0.1*epochs) == 0:
+                print(f"The loss at the step {iteration} is {loss}")
+                print(self.weights)
+                print(predictions)
+
+            iteration += 1
+
         return
 
     def predict(self, features: torch.Tensor, cutoff: float = 0.5) -> torch.Tensor:
@@ -46,7 +70,7 @@ class LogisticRegression:
         Returns:
             torch.Tensor: Predicted class labels (0 or 1).
         """
-        decisions: torch.Tensor = None
+        decisions: torch.Tensor = torch.tensor([1 if prob >= cutoff else 0 for prob in self.predict_proba(features)])
         return decisions
 
     def predict_proba(self, features: torch.Tensor) -> torch.Tensor:
@@ -65,8 +89,9 @@ class LogisticRegression:
         if self.weights is None:
             raise ValueError("Model not trained. Call the 'train' method first.")
         
-        probabilities: torch.Tensor = None
-        
+        features = features.float()
+
+        probabilities: torch.Tensor = self.sigmoid(features@self.weights[:-1] + self.weights[-1])
         return probabilities
 
     def initialize_parameters(self, dim: int, random_state: int) -> torch.Tensor:
@@ -85,7 +110,7 @@ class LogisticRegression:
         """
         torch.manual_seed(random_state)
         
-        params: torch.Tensor = None
+        params: torch.Tensor = torch.randn(dim+1,)
         
         return params
 
@@ -103,7 +128,7 @@ class LogisticRegression:
         Returns:
             torch.Tensor: The sigmoid of z.
         """
-        result: torch.Tensor = None
+        result: torch.Tensor = 1/(1 + torch.exp(-z))
         return result
 
     @staticmethod
@@ -123,8 +148,8 @@ class LogisticRegression:
         Returns:
             torch.Tensor: The computed binary cross-entropy loss.
         """
-        ce_loss: torch.Tensor = None
-        return ce_loss
+        ce_loss: torch.Tensor = torch.sum(targets*torch.log(predictions) + (1-targets)*torch.log(1-predictions))/predictions.size(0)
+        return ce_loss*(-1)
 
     @property
     def weights(self):
