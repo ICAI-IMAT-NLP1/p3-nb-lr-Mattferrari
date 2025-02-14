@@ -52,6 +52,7 @@ class NaiveBayes:
             else:
                 class_priors[int(label)] += 1/labels.size(0)
 
+        class_priors = {idx: class_priors[idx] for idx in sorted(class_priors.keys())}
         return class_priors
 
     def estimate_conditional_probabilities(
@@ -85,6 +86,8 @@ class NaiveBayes:
                 class_word_counts[label] = (features[idx]+delta)/(self.vocab_size*delta + total_words_class[label])
             else:
                 class_word_counts[label] += features[idx]/(self.vocab_size*delta + total_words_class[label])
+
+        class_word_counts = {idx: class_word_counts[idx] for idx in sorted(class_word_counts.keys())}
                 
         return class_word_counts
 
